@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>{% block title %}Welcome!{% endblock %}</title>
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>⚫️</text><text y=%221.3em%22 x=%220.2em%22 font-size=%2276%22 fill=%22%23fff%22>sf</text></svg>">
+        {% block stylesheets %}
+        {% endblock %}
+
+        {% block javascripts %}
+        {% endblock %}
+
+        <style>
+            .wrapper {
+                margin: auto;
+                text-align: center;
+            }
+            div.wrapper>*:not(.fix) {
+                margin-top: 20px;
+            }
+            #calculate {
+                padding: 15px;
+                border: 1px solid black;
+                width: fit-content;
+                display: inline-block;
+                cursor: pointer;
+            }
+            #result {
+                font-size: 25px;
+                font-weight: 800;
+                color: blue;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="wrapper">
+            <select name="provider" id="provider">
+            </select>
+            <div class="fix"></div>
+            <input type="number" name="weight" id="weight" value="1">
+            <div class="fix"></div>
+            <div class="button" id="calculate" onclick="calculateDelivery()">Calculate</div>
+            <div class="fix"></div>
+            <div id="result"></div>
+        </div>
+
+        <script type="text/javascript">
+            const fetchData = async (url, method, body) => {
+                return await fetch(
+                    new Request('http://localhost:8080' + url, {
+                        method: method,
+                        body: body === null ? null : JSON.stringify(body),
+                        headers: {"Content-type": "application/json; charset=UTF-8"}
+                    })
+                )
+                    .then((response) => {return response.json();})
+                    .catch((error) => {console.log(error)});
+            }
+            window.onload = () => {
+                fetchData('/carriers', 'GET', null)
+                    .then((data) => {
+                        const el = document.getElementById('provider');
+                        el.innerHTML = '';
+                        data.forEach((elem) => {
+                            const option = document.createElement('option');
+                            option.value = elem;
+                            option.innerHTML = elem;
+                            el.appendChild(option);
+                        })
+                    });
+            };
+
+            const calculateDelivery = () => {
+                fetchData(
+                    '/calculate_delivery_coast',
+                    'POST',
+                    {
+                        carrier: document.getElementById('provider').value,
+                        weight: parseFloat(document.getElementById('weight').value)
+                    }
+                )
+                    .then((data) => {
+                        console.log(data);
+                        document.getElementById('result').innerHTML = data.cost + ' ' + data.currency
+                    })
+            }
+        </script>
+    </body>
+</html>
